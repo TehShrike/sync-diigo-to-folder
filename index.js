@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const pify = require(`pify`)
 const { readFile, writeFile } = pify(require(`fs`))
 const { join: joinPath } = require(`path`)
