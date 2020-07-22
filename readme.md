@@ -9,7 +9,7 @@ npm i -g sync-diigo-to-folder
 ## Use
 
 ```sh
-sync-diigo-to-folder --path=~/Obsidian/Bookmarks --all --user=DIIGO_USERNAME --password=DIIGO_PASSWORD --apiKey=DIIGO_API_KEY
+sync-diigo-to-folder --path=/Users/tehshrike/Obsidian/Bookmarks --all --user=DIIGO_USERNAME --password=DIIGO_PASSWORD --apiKey=DIIGO_API_KEY
 ```
 
 This script is meant to be idempotent, so that you can re-run it over and over without losing any data other than what originally came from Diigo.
