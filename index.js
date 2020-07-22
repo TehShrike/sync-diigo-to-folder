@@ -45,7 +45,7 @@ const main = async({ user, password, path, all, apiKey, countPerRequest }) => {
 
 		await updateBookmarksOnDisc({ bookmarks, path })
 
-		return all && bookmarks.length === countPerRequest
+		return all && bookmarks.length === count
 	})
 }
 
