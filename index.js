@@ -40,13 +40,19 @@ const main = async({ user, password, path, all, apiKey, countPerRequest }) => {
 
 	await makeDir(path)
 
+	let synced = 0
+
 	await stepper(countPerRequest, async step => {
 		const { data: bookmarks } = await get(buildUrl({ count, step, apiKey, user }), { headers })
 
 		await updateBookmarksOnDisc({ bookmarks, path })
 
+		synced += bookmarks.length
+
 		return all && bookmarks.length === count
 	})
+
+	console.log(`Synced`, synced, `bookmarks.`)
 }
 
 const updateBookmarksOnDisc = async({ bookmarks, path }) => Promise.all(bookmarks.map(
