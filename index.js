@@ -6,6 +6,7 @@ const { join: joinPath } = require(`path`)
 const { get } = require(`httpie`)
 const makeDir = require(`make-dir`)
 const filenamify = require(`filenamify`)
+const untildify = require(`untildify`)
 
 const catchify = promise => promise.then(result => [ null, result ]).catch(err => [ err, null ])
 
@@ -34,9 +35,11 @@ const stepper = async(increment, fn) => {
 	}
 }
 
-const main = async({ user, password, path, all, apiKey, countPerRequest }) => {
+const main = async({ user, password, path: potentiallyTildifiedPath, all, apiKey, countPerRequest }) => {
 	const headers = buildHeaders({ user, password })
 	const count = parseInt(countPerRequest, 10)
+
+	const path = untildify(potentiallyTildifiedPath)
 
 	await makeDir(path)
 
