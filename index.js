@@ -17,11 +17,6 @@ const buildHeaders = ({ user, password }) => ({
 	Authorization: `Basic ${ Buffer.from(`${ user }:${ password }`).toString(`base64`) }`,
 })
 
-const removeProtocol = urlString => {
-	const [ , ...rest ] = urlString.split(`://`)
-	return rest.join(``)
-}
-
 const diigoAndUserContentSeparator = `---\n`
 const extension = `.md`
 
@@ -60,7 +55,7 @@ const main = async({ user, password, path: potentiallyTildifiedPath, all, apiKey
 
 const updateBookmarksOnDisc = async({ bookmarks, path }) => Promise.all(bookmarks.map(
 	async({ tags, url, title, created_at: createdAt, desc: description }) => {
-		const sanitizedName = filenamify(removeProtocol(url), {
+		const sanitizedName = filenamify(title, {
 			replacement: `_`,
 			maxLength: 255 - extension.length,
 		})
