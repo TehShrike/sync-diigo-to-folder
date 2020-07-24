@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const pify = require(`pify`)
-const { readFile, writeFile } = pify(require(`fs`))
+const { readFile, writeFile, utimes } = pify(require(`fs`))
 const { join: joinPath } = require(`path`)
 const { get } = require(`httpie`)
 const makeDir = require(`make-dir`)
@@ -53,27 +53,35 @@ const main = async({ user, password, path: potentiallyTildifiedPath, all, apiKey
 	console.log(`Synced`, synced, `bookmarks.`)
 }
 
-const updateBookmarksOnDisc = async({ bookmarks, path }) => Promise.all(bookmarks.map(
-	async({ tags, url, title, created_at: createdAt, desc: description }) => {
-		const sanitizedName = filenamify(title, {
-			replacement: `_`,
-			maxLength: 255 - extension.length,
-		})
-		const fullPath = joinPath(path, sanitizedName + extension)
-		const diigoData = noteContents({ tags, url, title, createdAt })
+const updateBookmarksOnDisc = async({ bookmarks, path }) => {
+	const now = new Date()
 
-		const [ err, currentContents ] = await catchify(readFile(fullPath, { encoding: `utf8` }))
+	return Promise.all(bookmarks.map(
+		async({ tags, url, title, created_at: createdAt, updated_at: updatedAt, desc: description }) => {
+			const sanitizedName = filenamify(title, {
+				replacement: `_`,
+				maxLength: 255 - extension.length,
+			})
+			const fullPath = joinPath(path, sanitizedName + extension)
+			const diigoData = noteContents({ tags, url, title, createdAt })
 
-		if (err && err.code === `ENOENT`) {
-			await writeFile(fullPath, diigoData + `\n` + description + `\n`)
-		} else if (err) {
-			throw err
-		} else {
-			const [ , ...rest ] = currentContents.split(diigoAndUserContentSeparator)
-			await writeFile(fullPath, diigoData + rest.join(diigoAndUserContentSeparator))
-		}
-	},
-))
+			const [ err, currentContents ] = await catchify(readFile(fullPath, { encoding: `utf8` }))
+
+			const setModifiedTime = () => utimes(fullPath, now, new Date(updatedAt))
+
+			if (err && err.code === `ENOENT`) {
+				await writeFile(fullPath, diigoData + `\n` + description + `\n`)
+				await setModifiedTime()
+			} else if (err) {
+				throw err
+			} else {
+				const [ , ...rest ] = currentContents.split(diigoAndUserContentSeparator)
+				await writeFile(fullPath, diigoData + rest.join(diigoAndUserContentSeparator))
+				await setModifiedTime()
+			}
+		},
+	))
+}
 
 const noteContents = ({ tags, url, title, createdAt }) =>
 	`# ${ title }
