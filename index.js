@@ -70,13 +70,14 @@ const updateBookmarksOnDisc = async({ bookmarks, path }) => {
 			const setModifiedTime = () => utimes(fullPath, now, new Date(updatedAt))
 
 			if (err && err.code === `ENOENT`) {
-				await writeFile(fullPath, diigoData + `\n` + description + `\n`)
+				const descriptionWithOptionalWhitespace = description ? (description + `\n`) : ``
+				await writeFile(fullPath, diigoData + diigoAndUserContentSeparator + `\n` + descriptionWithOptionalWhitespace)
 				await setModifiedTime()
 			} else if (err) {
 				throw err
 			} else {
 				const [ , ...rest ] = currentContents.split(diigoAndUserContentSeparator)
-				await writeFile(fullPath, diigoData + rest.join(diigoAndUserContentSeparator))
+				await writeFile(fullPath, diigoData + diigoAndUserContentSeparator + rest.join(diigoAndUserContentSeparator))
 				await setModifiedTime()
 			}
 		},
@@ -91,7 +92,6 @@ const noteContents = ({ tags, url, title, createdAt }) =>
 - cached: [On Diigo](https://www.diigo.com/cached?url=${ encodeURIComponent(url) })
 - created: [[${ new Date(createdAt).toISOString().slice(0, 10) }]]
 
----
 `
 
 const args = require(`mri`)(process.argv.slice(2), {
