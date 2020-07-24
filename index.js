@@ -78,7 +78,7 @@ const updateBookmarksOnDisc = async({ bookmarks, path }) => Promise.all(bookmark
 const noteContents = ({ tags, url, title, createdAt }) =>
 	`# ${ title }
 
-- tags: ${ tags.split(/,\s*/g).map(tag => `#${ tag }`).join(` `) }
+- tags: ${ tags.split(/,\s*/g).map(tag => `#${ tag.replace(/_/g, `-`) }`).join(` `) }
 - url: ${ url }
 - cached: [On Diigo](https://www.diigo.com/cached?url=${ encodeURIComponent(url) })
 - created: [[${ new Date(createdAt).toISOString().slice(0, 10) }]]
