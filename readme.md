@@ -24,6 +24,7 @@ By default it only reads the most recently-updated batch of bookmarks.
 - `user`: your Diigo username
 - `password`: your Diigo password
 - `apiKey`: your [Diigo API key](https://www.diigo.com/api_keys/new/)
+- `datePrefix`: a string to prefix the `[[YYYY-MM-DD]]` date links with (e.g. `Day/`)
 
 ## Output
 

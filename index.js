@@ -30,7 +30,7 @@ const stepper = async(increment, fn) => {
 	}
 }
 
-const main = async({ user, password, path: potentiallyTildifiedPath, all, apiKey, countPerRequest }) => {
+const main = async({ user, password, path: potentiallyTildifiedPath, all, apiKey, countPerRequest, datePrefix }) => {
 	const headers = buildHeaders({ user, password })
 	const count = parseInt(countPerRequest, 10)
 
@@ -43,7 +43,7 @@ const main = async({ user, password, path: potentiallyTildifiedPath, all, apiKey
 	await stepper(countPerRequest, async step => {
 		const { data: bookmarks } = await get(buildUrl({ count, step, apiKey, user }), { headers })
 
-		await updateBookmarksOnDisc({ bookmarks, path })
+		await updateBookmarksOnDisc({ bookmarks, path, datePrefix })
 
 		synced += bookmarks.length
 
@@ -53,7 +53,7 @@ const main = async({ user, password, path: potentiallyTildifiedPath, all, apiKey
 	console.log(`Synced`, synced, `bookmarks.`)
 }
 
-const updateBookmarksOnDisc = async({ bookmarks, path }) => {
+const updateBookmarksOnDisc = async({ bookmarks, path, datePrefix }) => {
 	const now = new Date()
 
 	return Promise.all(bookmarks.map(
@@ -63,7 +63,7 @@ const updateBookmarksOnDisc = async({ bookmarks, path }) => {
 				maxLength: 255 - extension.length,
 			})
 			const fullPath = joinPath(path, sanitizedName + extension)
-			const diigoData = noteContents({ tags, url, title, createdAt })
+			const diigoData = noteContents({ tags, url, title, createdAt, datePrefix })
 
 			const [ err, currentContents ] = await catchify(readFile(fullPath, { encoding: `utf8` }))
 
@@ -84,22 +84,23 @@ const updateBookmarksOnDisc = async({ bookmarks, path }) => {
 	))
 }
 
-const noteContents = ({ tags, url, title, createdAt }) =>
+const noteContents = ({ tags, url, title, createdAt, datePrefix }) =>
 	`# ${ title }
 
 - tags: ${ tags.split(/,\s*/g).map(tag => `#${ tag.replace(/_/g, `-`) }`).join(` `) }
 - url: ${ url }
 - cached: [On Diigo](https://www.diigo.com/cached?url=${ encodeURIComponent(url) })
-- created: [[${ new Date(createdAt).toISOString().slice(0, 10) }]]
+- created: [[${ datePrefix }${ new Date(createdAt).toISOString().slice(0, 10) }]]
 
 `
 
 const args = require(`mri`)(process.argv.slice(2), {
-	string: [ `user`, `password`, `path`, `apiKey`, `countPerRequest` ],
+	string: [ `user`, `password`, `path`, `apiKey`, `countPerRequest`, `datePrefix` ],
 	boolean: `all`,
 	default: {
 		all: false,
 		countPerRequest: 20,
+		datePrefix: ``,
 	},
 })
 
