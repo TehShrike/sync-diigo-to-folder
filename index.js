@@ -63,7 +63,8 @@ const updateBookmarksOnDisc = async({ bookmarks, path, datePrefix }) => {
 				maxLength: 255 - extension.length,
 			})
 			const fullPath = joinPath(path, sanitizedName + extension)
-			const diigoData = noteContents({ tags, url, title, createdAt, datePrefix })
+			const day = new Date(createdAt).toISOString().slice(0, 10)
+			const diigoData = noteContents({ tags, url, title, day, datePrefix })
 
 			const [ err, currentContents ] = await catchify(readFile(fullPath, { encoding: `utf8` }))
 
@@ -84,13 +85,13 @@ const updateBookmarksOnDisc = async({ bookmarks, path, datePrefix }) => {
 	))
 }
 
-const noteContents = ({ tags, url, title, createdAt, datePrefix }) =>
+const noteContents = ({ tags, url, title, day, datePrefix }) =>
 	`# ${ title }
 
 - tags: ${ tags.split(/,\s*/g).map(tag => `#${ tag.replace(/_/g, `-`) }`).join(` `) }
 - url: ${ url }
 - cached: [On Diigo](https://www.diigo.com/cached?url=${ encodeURIComponent(url) })
-- created: [[${ datePrefix }${ new Date(createdAt).toISOString().slice(0, 10) }]]
+- created: [[${ datePrefix }${ day }|${ day }]]
 
 `
 
