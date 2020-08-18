@@ -3,24 +3,18 @@ Sync all your Diigo bookmarks to a directory as Markdown files.  Intended for us
 ## Install
 
 ```sh
-npm i -g sync-diigo-to-folder
+npm i -g sync-diigo-to-single-file
 ```
 
 ## Use
 
 ```sh
-sync-diigo-to-folder --path=/Users/tehshrike/Obsidian/Bookmarks --all --user=DIIGO_USERNAME --password=DIIGO_PASSWORD --apiKey=DIIGO_API_KEY
+sync-diigo-to-single-file --path=/Users/tehshrike/Obsidian/Bookmarks.md --user=DIIGO_USERNAME --password=DIIGO_PASSWORD --apiKey=DIIGO_API_KEY
 ```
-
-This script is meant to be idempotent, so that you can re-run it over and over without losing any data other than what originally came from Diigo.
-
-By default it only reads the most recently-updated batch of bookmarks.
 
 ### Arguments
 
-- `path`: the directory to write output files to
-- `all`: *(default off)* – whether to save the most recently-updated bookmarks, or only one request's worth
-- `countPerRequest`: *(default 20)* – How many bookmarks to fetch per API request.  Max 100.
+- `path`: the file to write output to
 - `user`: your Diigo username
 - `password`: your Diigo password
 - `apiKey`: your [Diigo API key](https://www.diigo.com/api_keys/new/)
@@ -28,24 +22,27 @@ By default it only reads the most recently-updated batch of bookmarks.
 
 ## Output
 
-Right now the output for a bookmark of a site like <https://danluu.com/corp-eng-blogs/> looks like:
+Right now the output for a couple random bookmarks looks like:
 
 ```md
-# How (some) good corporate engineering blogs are written
+# What do executives do, anyway?
 
-- tags: #writing #marketing #blogging
-- url: https://danluu.com/corp-eng-blogs/
-- cached: [On Diigo](https://www.diigo.com/cached?url=https%3A%2F%2Fdanluu.com%2Fcorp-eng-blogs%2F)
-- created: [[2020-07-13]]
+- tags: #management #organization #leader
+- url: https://apenwarr.ca/log/?m=201909
+- cached: [On Diigo](https://www.diigo.com/cached?url=https%3A%2F%2Fapenwarr.ca%2Flog%2F%3Fm%3D201909)
+- created: [[Day/2020-05-21|2020-05-21]]
 
----
+
+
+# Roll Your Own Frameworks | Secret Weblog
+
+- tags: #software
+- url: https://blog.startifact.com/posts/roll-your-own-frameworks/
+- cached: [On Diigo](https://www.diigo.com/cached?url=https%3A%2F%2Fblog.startifact.com%2Fposts%2Froll-your-own-frameworks%2F)
+- created: [[Day/2020-05-21|2020-05-21]]
 
 
 ```
-
-the intention is that you can put your own notes below the `---` separator as desired.  Any changes above the separator will be overwritten by changes to your bookmark in Diigo.
-
-If you typed a description into Diigo, that description will be placed below the `---` separator on first write.  Updated descriptions will not be written to a pre-existing file.
 
 ## License
 

@@ -1,7 +1,7 @@
 {
-  "name": "sync-diigo-to-folder",
-  "version": "2.4.0",
-  "description": "Sync all your Diigo bookmarks to a directory as Markdown files.  Intended for use with Obsidian",
+  "name": "sync-diigo-to-single-file",
+  "version": "1.0.0",
+  "description": "Sync all your Diigo bookmarks to a Markdown file.  Intended for use with Obsidian",
   "main": "index.js",
   "bin": "./index.js",
   "scripts": {
@@ -19,11 +19,9 @@
   "bugs": {
     "url": "https://github.com/TehShrike/sync-diigo-to-folder/issues"
   },
-  "homepage": "https://github.com/TehShrike/sync-diigo-to-folder#readme",
+  "homepage": "https://github.com/TehShrike/sync-diigo-to-folder/tree/fixing-tests#readme",
   "dependencies": {
-    "filenamify": "^4.1.0",
     "httpie": "^1.1.2",
-    "make-dir": "^3.1.0",
     "mri": "^1.1.6",
     "pify": "^5.0.0",
     "untildify": "^4.0.0"

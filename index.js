@@ -1,24 +1,17 @@
 #!/usr/bin/env node
 
 const pify = require(`pify`)
-const { readFile, writeFile, utimes } = pify(require(`fs`))
-const { join: joinPath } = require(`path`)
+const { writeFile } = pify(require(`fs`))
 const { get } = require(`httpie`)
-const makeDir = require(`make-dir`)
-const filenamify = require(`filenamify`)
 const untildify = require(`untildify`)
 
-const catchify = promise => promise.then(result => [ null, result ]).catch(err => [ err, null ])
-
 // https://www.diigo.com/api_dev
-const buildUrl = ({ count, step, apiKey, user }) => `https://secure.diigo.com/api/v2/bookmarks?key=${ apiKey }&user=${ user }&start=${ step * count }&count=${ count }&sort=1&filter=all`
+const countPerRequest = 100
+const buildUrl = ({ step, apiKey, user }) => `https://secure.diigo.com/api/v2/bookmarks?key=${ apiKey }&user=${ user }&start=${ step * countPerRequest }&count=${ countPerRequest }&sort=0&filter=all`
 
 const buildHeaders = ({ user, password }) => ({
 	Authorization: `Basic ${ Buffer.from(`${ user }:${ password }`).toString(`base64`) }`,
 })
-
-const diigoAndUserContentSeparator = `---\n`
-const extension = `.md`
 
 const stepper = async(increment, fn) => {
 	let current = 0
@@ -30,62 +23,36 @@ const stepper = async(increment, fn) => {
 	}
 }
 
-const main = async({ user, password, path: potentiallyTildifiedPath, all, apiKey, countPerRequest, datePrefix }) => {
+const main = async({ user, password, path: potentiallyTildifiedPath, apiKey, datePrefix }) => {
 	const headers = buildHeaders({ user, password })
-	const count = parseInt(countPerRequest, 10)
 
 	const path = untildify(potentiallyTildifiedPath)
 
-	await makeDir(path)
-
 	let synced = 0
 
-	await stepper(countPerRequest, async step => {
-		const { data: bookmarks } = await get(buildUrl({ count, step, apiKey, user }), { headers })
+	const noteTextChunks = []
 
-		await updateBookmarksOnDisc({ bookmarks, path, datePrefix })
+	await stepper(countPerRequest, async step => {
+		const { data: bookmarks } = await get(buildUrl({ step, apiKey, user }), { headers })
+
+		const notes = bookmarks.map(({ tags, url, title, created_at: createdAt, desc: description }) => {
+			const day = new Date(createdAt).toISOString().slice(0, 10)
+			return noteContents({ tags, url, title, day, datePrefix, description })
+		})
+
+		noteTextChunks.push(...notes)
 
 		synced += bookmarks.length
 
-		return all && bookmarks.length === count
+		return bookmarks.length === countPerRequest
 	})
+
+	await writeFile(path, noteTextChunks.join('\n'))
 
 	console.log(`Synced`, synced, `bookmarks.`)
 }
 
-const updateBookmarksOnDisc = async({ bookmarks, path, datePrefix }) => {
-	const now = new Date()
-
-	return Promise.all(bookmarks.map(
-		async({ tags, url, title, created_at: createdAt, updated_at: updatedAt, desc: description }) => {
-			const sanitizedName = filenamify(title, {
-				replacement: `_`,
-				maxLength: 255 - extension.length,
-			})
-			const fullPath = joinPath(path, sanitizedName + extension)
-			const day = new Date(createdAt).toISOString().slice(0, 10)
-			const diigoData = noteContents({ tags, url, title, day, datePrefix })
-
-			const [ err, currentContents ] = await catchify(readFile(fullPath, { encoding: `utf8` }))
-
-			const setModifiedTime = () => utimes(fullPath, now, new Date(updatedAt))
-
-			if (err && err.code === `ENOENT`) {
-				const descriptionWithOptionalWhitespace = description ? (description + `\n`) : ``
-				await writeFile(fullPath, diigoData + diigoAndUserContentSeparator + `\n` + descriptionWithOptionalWhitespace)
-				await setModifiedTime()
-			} else if (err) {
-				throw err
-			} else {
-				const [ , ...rest ] = currentContents.split(diigoAndUserContentSeparator)
-				await writeFile(fullPath, diigoData + diigoAndUserContentSeparator + rest.join(diigoAndUserContentSeparator))
-				await setModifiedTime()
-			}
-		},
-	))
-}
-
-const noteContents = ({ tags, url, title, day, datePrefix }) =>
+const noteContents = ({ tags, url, title, day, datePrefix, description }) =>
 	`# ${ title }
 
 - tags: ${ tags.split(/,\s*/g).map(tag => `#${ tag.replace(/_/g, `-`) }`).join(` `) }
@@ -93,14 +60,12 @@ const noteContents = ({ tags, url, title, day, datePrefix }) =>
 - cached: [On Diigo](https://www.diigo.com/cached?url=${ encodeURIComponent(url) })
 - created: [[${ datePrefix }${ day }|${ day }]]
 
+${description}
 `
 
 const args = require(`mri`)(process.argv.slice(2), {
-	string: [ `user`, `password`, `path`, `apiKey`, `countPerRequest`, `datePrefix` ],
-	boolean: `all`,
+	string: [ `user`, `password`, `path`, `apiKey`, `datePrefix` ],
 	default: {
-		all: false,
-		countPerRequest: 20,
 		datePrefix: ``,
 	},
 })
